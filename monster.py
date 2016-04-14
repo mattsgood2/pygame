@@ -1,90 +1,53 @@
-import sys
+import random
 
-from character import Character
-from monster import Dragon
-from monster import Goblin
-from monster import Troll
+from combat import Combat
 
-
-class Game:
-  def setup(self):
-    self.player = Character()
-    self.monsters = [
-      Goblin(),
-      Troll(),
-      Dragon()
-    ]
-    self.monster = self.get_next_monster()
-
-  def get_next_monster(self):
-    try:
-      return self.monsters.pop(0)
-    except IndexError:
-      return None
-
-  def monster_turn(self):
-    if self.monster.attack():
-        print("{} is attacking !".format(self.monster))
-
-        if input("Dodge? Y/N ").lower() =='y':
-            if self.player.dodge():
-                print("You dodged the attack!")
-            else:
-                print("You got Hit !! ")
-                self.player.hit_points -= 1
-        else:
-            print("{} hit you for 1 point!".format(self.monster))
-            self.player.hit_point -=1
-    else:
-        print("{} isn't attacking this turn".format(self.monster))
-
-  def player_turn(self):
-    player_choice = input("[A]ttack, [R]est, [Q]uit,").lower()
-    if player_choice == 'a':
-        print("You're attacking {}".format(self.monster))
-
-        if self.player.attack():
-            if self.monster.dodge():
-                print("{} dodged your attack".format(self.monster)
-            else:
-                if self.player.leveled_up():
-                    self.monster.hit_points -= 2
-                else:
-                    self.monster.hit_points -= 1
-
-                print("You Hit {} with yours {}".format(self.monster, self.player.weapon))
-        else:
-            print("You Missed!")
-    elif player_choice == 'r':
-        self.player.rest()
-    elif player_choice == 'q':
-        sys.exit()
-    else:
-        self.player_turn()
-
-  def cleanup(self):
-    if self.monster.hit_points <=0:
-        self.player.experience += self.monster.experience
-        print("You Killed {}".format(self.monster))
-        self.monster = self.get_next_monster()
+COLORS = ['yellow', 'red', 'blue', 'green']
 
 
-  def __init__(self):
-    self.setup()
+class Monster(Combat):
+    min_hit_points = 1
+    max_hit_points = 1
+    min_experience = 1
+    max_experience = 1
+    weapon = 'sword'
+    sound = 'roar'
 
-    while self.player.hit_points and (self.monster or self.monsters):
-      print("\n"+"="*20)
-      print(self.player)
-      self.monster_turn()
-      print('-'*20)
-      self.player_turn()
-      self.cleanup()
-      print('\n'+'='*20)
+    def __init__(self, **kwargs):
+        self.hit_points = random.randint(self.min_hit_points, self.max_hit_points)
+        self.experience = random.randint(self.min_experience, self.max_experience)
+        self.color = random.choice(COLORS)
 
-    if self.player.hit_points:
-      print("You win!")
-    elif self.monsters or self.monster:
-      print("You lose!")
-    sys.exit()
+        for key, value in kwargs.items():
+          setattr(self, key, value)
 
-Game()
+    def __str__(self):
+        return '{} {}, HP: {}, XP: {}'.format(self.color.title(),
+                                              self.__class__.__name__,
+                                              self.hit_points,
+                                              self.experience)
+
+    def battlecry(self):
+        return self.sound.upper()
+
+
+class Goblin(Monster):
+    max_hit_points = 3
+    max_experience = 2
+    sound = 'squeak'
+
+
+class Troll(Monster):
+    min_hit_points = 3
+    max_hit_points = 5
+    min_experience = 2
+    max_experience = 6
+    sound = 'growl'
+
+
+class Dragon(Monster):
+    min_hit_points = 5
+    max_hit_points = 10
+    min_experience = 6
+    max_experience = 10
+    sound = 'raaaaaaaaaaar'
